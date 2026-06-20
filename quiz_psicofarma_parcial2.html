@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Psicofarmacología · Banco de preguntas 2º parcial</title>
+<style>
+:root{
+  --cream:#FBF7EF;
+  --ink:#241F1A;
+  --plum:#5B3A6E;
+  --plum-dim:#8a6a9c;
+  --moss:#3F6B4F;
+  --rust:#B5482F;
+  --gold:#C99A3A;
+  --line:#E4DCC9;
+  --card:#FFFFFF;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:var(--cream);
+  color:var(--ink);
+  font-family:'Iowan Old Style','Georgia',serif;
+  line-height:1.5;
+}
+.topbar{
+  position:sticky; top:0; z-index:10;
+  background:var(--cream);
+  border-bottom:2px solid var(--ink);
+  padding:14px 24px;
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  flex-wrap:wrap;
+}
+.brand{display:flex; flex-direction:column; gap:2px;}
+.brand .eyebrow{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--plum-dim);
+}
+.brand h1{margin:0; font-size:20px; font-weight:600;}
+.stats{
+  display:flex; gap:18px; font-family:'JetBrains Mono', monospace; font-size:13px;
+}
+.stat{display:flex; flex-direction:column; align-items:flex-end;}
+.stat b{font-size:18px; color:var(--plum);}
+#progressWrap{
+  height:4px; background:var(--line); width:100%;
+}
+#progressBar{height:100%; background:var(--plum); width:0%; transition:width .25s;}
+
+.container{max-width:760px; margin:0 auto; padding:28px 20px 100px;}
+
+.qcard{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:2px;
+  padding:22px 24px;
+  margin-bottom:16px;
+  position:relative;
+  box-shadow:0 1px 0 rgba(0,0,0,.03);
+}
+.qcard.correct{border-left:5px solid var(--moss);}
+.qcard.wrong{border-left:5px solid var(--rust);}
+.qnum{
+  font-family:'JetBrains Mono', monospace; font-size:11px;
+  color:var(--plum-dim); letter-spacing:.08em; text-transform:uppercase;
+}
+.qtext{font-size:17px; margin:6px 0 14px; font-weight:600;}
+.options{display:flex; flex-direction:column; gap:8px;}
+.opt{
+  display:flex; align-items:flex-start; gap:10px;
+  border:1px solid var(--line); border-radius:2px;
+  padding:10px 12px; cursor:pointer;
+  font-size:15px;
+  transition:background .15s, border-color .15s;
+  background:#fffdf9;
+}
+.opt:hover{border-color:var(--plum-dim);}
+.opt input{margin-top:3px; accent-color:var(--plum);}
+.opt.sel{border-color:var(--plum); background:#f4eef8;}
+.opt.show-correct{border-color:var(--moss); background:#eef5ee;}
+.opt.show-wrong{border-color:var(--rust); background:#f7eae6;}
+.opt .letter{
+  font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--plum-dim);
+  width:16px; flex-shrink:0;
+}
+.feedback{
+  margin-top:12px; font-family:'JetBrains Mono', monospace; font-size:13px;
+  display:none;
+}
+.feedback.show{display:block;}
+.feedback.ok{color:var(--moss);}
+.feedback.bad{color:var(--rust);}
+
+.footer-bar{
+  position:fixed; bottom:0; left:0; right:0;
+  background:var(--cream);
+  border-top:2px solid var(--ink);
+  padding:14px 24px;
+  display:flex; justify-content:center; gap:14px; flex-wrap:wrap;
+}
+button{
+  font-family:'JetBrains Mono', monospace;
+  font-size:13px; letter-spacing:.04em; text-transform:uppercase;
+  padding:10px 18px; border-radius:2px; border:1.5px solid var(--ink);
+  background:var(--ink); color:var(--cream); cursor:pointer;
+}
+button.secondary{background:transparent; color:var(--ink);}
+button:hover{opacity:.85;}
+
+.summary{
+  text-align:center; padding:30px 20px; border:1px solid var(--line); background:var(--card); margin-bottom:20px;
+}
+.summary h2{margin:0 0 6px; font-size:26px;}
+.summary .score{font-family:'JetBrains Mono', monospace; font-size:42px; color:var(--plum); margin:10px 0;}
+
+@media(max-width:600px){
+  .topbar{padding:12px 16px;}
+  .stats{gap:10px;}
+  .container{padding:20px 14px 110px;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="eyebrow">Cátedra de Psicofarmacología · UBA</span>
+    <h1>Compilado 2º parcial — Autoevaluación</h1>
+  </div>
+  <div class="stats">
+    <div class="stat"><span>Respondidas</span><b id="statAnswered">0/172</b></div>
+    <div class="stat"><span>Correctas</span><b id="statCorrect">0</b></div>
+  </div>
+</div>
+<div id="progressWrap"><div id="progressBar"></div></div>
+
+<div class="container" id="container"></div>
+
+<div class="footer-bar">
+  <button class="secondary" id="resetBtn">Reiniciar</button>
+  <button id="finishBtn">Ver resultado final</button>
+</div>
+
+<script>
+const QUESTIONS = [
+{q:"1. Señale la opción correcta:",o:["La demencia y la enfermedad de Wernicke son consecuencia del consumo crónico y excesivo de alcohol","El tratamiento farmacológico del consumo problemático de alcohol comienza con la desintoxicación, utilizando benzodiacepinas para el control sintomático","En el tratamiento a largo plazo (prolongado) del consumo problemático de alcohol se utiliza naltrexona o disulfiram","Todas son correctas"],c:3},
+{q:"2. Con respecto al tratamiento farmacológico del TOC:",o:["Se comienza con estrategias combinadas dada la poca efectividad de los tratamientos de monoterapia","Se comienza con un IRSS en dosis altas, y se espera tres meses","Se comienza con un IRSS en dosis bajas y se espera tres meses","Se comienza con un IRSS en dosis altas y una benzodiacepina, y se espera tres meses"],c:1},
+{q:"3. Marque la opción correcta acerca del tratamiento de la esquizofrenia:",o:["El plan de tratamiento incluye a la farmacoterapia, la psicoterapia y el apoyo social","Los objetivos generales son la remisión sintomática (positivos y negativos), prevención de recaídas y contención del paciente","Es importante el trabajo de los distintos profesionales dirigido a la adherencia al tratamiento","Todas son correctas"],c:3},
+{q:"4. ¿Durante cuánto tiempo se mantienen los fármacos antipsicóticos en la esquizofrenia?",o:["Hasta la remisión sintomática","Hasta que las alucinaciones ya no tengan una interpretación delirante, pero pueden permanecer como “voces sin importancia”","Por tiempo indefinido, posiblemente para toda la vida, monitoreando regularmente la aparición de efectos adversos a largo plazo","Ninguna es correcta"],c:2},
+{q:"5. En un paciente que presenta únicamente insomnio de conciliación, la indicación más racional sería:",o:["Un hipnótico que tenga efecto residual","Un hipnótico de larga duración de acción","Un hipnótico que tenga acumulación","Un hipnótico de corta duración de acción"],c:3},
+{q:"6. En el trastorno de ansiedad social generalizada, el tratamiento de primera elección es con:",o:["Tricíclicos","Bupropión","Antipsicóticos atípicos, en dosis bajas","IRSS"],c:3},
+{q:"7. Con respecto al Sildenafil:",o:["Para que actúe es imprescindible el estímulo sexual","No se requiere ningún estímulo sexual, ya que inicia una cascada química en el cuerpo cavernoso","Comienza a actuar inmediatamente después de su administración","Las reacciones adversas más frecuentes son lesiones en los tejidos, nódulos y cicatrices fibrosas"],c:0},
+{q:"8. Paciente con ansiedad y dificultad para dormir, presunto TAG. ¿Mejor opción a largo plazo?",o:["Escitalopram","Midazolam","Alprazolam","Risperidona"],c:0},
+{q:"9. Señale la opción correcta respecto del tratamiento de la depresión:",o:["Los estabilizadores del ánimo son fármacos de primera elección","Los IMAO son fármacos de primera elección","En el tratamiento de la depresión pueden indicarse dos antidepresivos distintos al mismo tiempo, sin riesgo de interacciones","Los IRSS son fármacos de primera elección"],c:3},
+{q:"10. Con respecto al diagnóstico diferencial entre TLP y TB tipo 2:",o:["Ambos tienen muchos síntomas en común: irritabilidad, labilidad emocional, impulsividad y mayor riesgo suicida","El tratamiento puede ser parecido, con excepción del uso de antidepresivos (que no se administran solos en el TB)","Pueden presentarse de forma comórbida","Todas son correctas"],c:3},
+{q:"11. En relación al trastorno bipolar:",o:["La manía es un estado de ánimo anormal y elevado, expansivo o irritable","El tratamiento del trastorno bipolar es necesario que sea crónico","Es posible un switch maníaco ante la utilización de antidepresivos en un paciente con predisposición","Todas son correctas"],c:3},
+{q:"12. En el tratamiento de trastornos bipolares, los antidepresivos…",o:["No se pueden dar jamás, en ningún caso","Se pueden dar sin problemas","Se pueden dar siempre que estén acompañados de una benzodiacepina","No se pueden dar, salvo excepciones. Nunca solos, siempre acompañados de un estabilizador"],c:3},
+{q:"13. ¿Cuál de los siguientes psicofármacos es aversivo y se utiliza en el consumo de alcohol?",o:["Risperidona","Litio","Desvenlafaxina","Disulfiram"],c:3},
+{q:"14. El tratamiento del TOC:",o:["Tanto la psicoterapia como los psicofármacos son parcialmente eficaces","Siempre es monoterapia","Tanto la psicoterapia como los psicofármacos son altamente eficaces","El tratamiento de base es farmacológico"],c:0},
+{q:"15. En el tratamiento de los trastornos de la personalidad, ¿cuál es el dominio objetivo del tratamiento farmacológico?",o:["Cognitivo-perceptual","Impulsividad","Disregulación afectiva","Todas son correctas"],c:3},
+{q:"16. De las demencias la que presenta mayor prevalencia poblacional es:",o:["Demencia por cuerpos de Lewy","Demencia vascular","Demencia frontotemporal","Demencia de Alzheimer"],c:3},
+{q:"17. ¿Cuál es la diferencia esencial entre los trastornos de estrés agudo y estrés postraumático?",o:["La cantidad de criterios diagnósticos","La funcionalidad de la persona","El criterio temporal","Todas son correctas"],c:2},
+{q:"18. ¿Qué pareja NO tiene posibilidad de funcionar bien?",o:["Disfunción eréctil-sildenafil","Eyaculación precoz-paroxetina","Disfunción eréctil-alcohol","Todas tienen posibilidad de funcionar bien"],c:2},
+{q:"19. En los trastornos de la alimentación, el aspecto más importante del tratamiento es el:",o:["Farmacológico","Multidisciplinar","Psicológico","Nutricional"],c:1},
+{q:"20. ¿Cuál de estas opciones son grupos de moléculas que se utilizan en el tratamiento de trastornos neurocognitivos?",o:["Donepezilo-Rivastigmina","Risperidona-Asenapina","Alprazolam-IRSS","Donepezilo-Litio"],c:0},
+{q:"21. ¿En qué casos de esquizofrenia se administra clozapina?",o:["Cuando comenzó con un antipsicótico típico y hay efectos adversos intolerables o falta de eficacia, se reemplaza por clozapina","En casos tratados con dos antipsicóticos por 6 semanas cada uno sin respuesta favorable","En las esquizofrenias resistentes","B y C son correctas"],c:3},
+{q:"22. Los IRSS se indican en el tratamiento de:",o:["Solo en los trastornos depresivos","Trastornos de personalidad del cluster A y trastornos depresivos","Trastornos de ansiedad y depresivos","Trastornos depresivos y trastorno bipolar"],c:2},
+{q:"23. El trastorno por estrés-postraumático se caracteriza por presentar:",o:["Síntomas intrusivos","Síntomas evitativos","Síntomas del estado del ánimo y la cognición","Todas son correctas"],c:3},
+{q:"24. Señale la respuesta incorrecta sobre clozapina:",o:["A menudo resulta más eficaz que otros antipsicóticos","Se puede usar en casos refractarios","Es un antipsicótico de primera elección en el tratamiento de la esquizofrenia","Todas son correctas"],c:2},
+{q:"25. ¿Cuál de los siguientes fármacos estaría indicado para una demencia de Alzheimer?",o:["Rivastigmina","Zopiclona","Zaleplon","Bupropion"],c:0},
+{q:"26. Las llamadas “medidas inespecíficas” en el tratamiento del insomnio apuntan a:",o:["Corregir las situaciones relacionadas con la higiene inadecuada del sueño","Utilizar un ansiolítico a bajas dosis para la remisión rápida del cuadro","Corregir o medicar con drogas adecuadas si el insomnio depende de otras alteraciones","Realizar una entrevista semiológica para detectar qué tipo de insomnio padece el paciente"],c:0},
+{q:"27. ¿Cuál de los siguientes trastornos NO corresponde al capítulo de trastornos de personalidad?",o:["Trastorno narcisista de la personalidad","Trastorno histriónico de la personalidad","Trastorno límite de la personalidad","Trastorno distímico de la personalidad"],c:3},
+{q:"28. ¿Cuál de las siguientes afirmaciones NO es correcta sobre tratamiento de trastornos de ansiedad?",o:["Los IRSS se indican en la ansiedad social cuando esta es generalizada","Los betabloqueantes son fármacos utilizados pre-exposición en ansiedad social no generalizada","Los tricíclicos resultan efectivos en pánico, aunque no son de primera elección","En el tratamiento del pánico los fármacos de primera elección son los IMAO"],c:3},
+{q:"29. De acuerdo al DSM-V los síntomas cardinales de la depresión mayor son:",o:["La sensación de vacío y las ideas suicidas","La desesperanza y la anhedonia","La sensación de vacío y la pérdida de perspectiva","Estado de ánimo depresivo y la anhedonia"],c:3},
+{q:"30. Al nuevo capítulo de TOC y trastornos relacionados lo integran:",o:["El TOC, tricotilomanía, trastorno de pánico, trastorno de excoriaciones, entre otros","El TOC, tricotilomanía, trastorno de excoriaciones, trastorno maníaco, entre otros","El TOC, tricotilomanía, trastorno excoriaciones, trastorno dismórfico corporal, entre otros","El TOC, tricotilomanía, trastorno de pánico, trastorno de excoriaciones y trastorno dismórfico corporal"],c:2},
+{q:"31. Indique la opción correcta acerca del esquema de tratamiento farmacológico del TLP:",o:["La clozapina y los IMAO son las primeras instancias para tratar los síntomas","Para los síntomas afectivos, impulsivos y cognitivo-perceptuales son eficaces los antipsicóticos atípicos","Las conductas suicidas y autoagresivas son blancos secundarios","Se recomienda litio en todos los casos"],c:1},
+{q:"32. Marque la opción incorrecta respecto al tratamiento farmacológico de la esquizofrenia:",o:["En la fase de estabilización se utiliza la misma dosis que en la fase aguda","En nuestro país la fase de estabilización no es muy utilizada, se pasa de aguda a mantenimiento","Los antipsicóticos atípicos son de primera elección por su mayor efectividad respecto a los síntomas positivos","El uso de atípicos prevalece respecto a los típicos por menores efectos adversos"],c:2},
+{q:"33. ¿Cuál de los mencionados NO corresponde al grupo de hipnóticos?",o:["Zopiclona","Zolpidem","Zaleplon","Ziprasidona"],c:3},
+{q:"34. Señale cuál es un fármaco de primera elección en el TDAH:",o:["Metilfenidato","Buspirona","Pregabalina","Bupropión"],c:0},
+{q:"35. En trastornos de personalidad, los patrones deben ser (MARCAR LA INCORRECTA):",o:["Permanentes y desadaptativos","Flexibles e inestables a lo largo del tiempo","Causan deterioro funcional significativo","Generan malestar significativo"],c:1},
+{q:"36. Los IRSS se indican en:",o:["Trastorno por angustia","Trastorno depresivo mayor","Trastorno obsesivo compulsivo","Todas son correctas"],c:3},
+{q:"37. El sildenafil tiene una vida media de aproximadamente:",o:["30 minutos","24 horas","5 horas","10 horas"],c:2},
+{q:"38. En el tratamiento del trastorno de pánico, si no hay respuesta luego de un IRSS, se puede utilizar:",o:["Clonazepam","Risperidona","Haloperidol","Venlafaxina"],c:3},
+{q:"39. TLP en crisis: fármaco que actúe rápido:",o:["Un antipsicótico atípico, como aripiprazol u olanzapina","Un IRSS, como sertralina o fluoxetina","Un estimulante, como metilfenidato o anfetaminas","Litio"],c:0},
+{q:"40. ¿Cuál es incorrecta?",o:["Ofrecer la mejor remisión psicótica va de la mano de detener la progresión de la esquizofrenia","En general, la afectividad en la esquizofrenia no está alterada","Las recaídas tienden a producirse en pacientes con bajo insight","El uso de megadosis de antipsicóticos no aporta ventajas y aumenta efectos secundarios"],c:1},
+{q:"41. Si un paciente es diagnosticado con TLP, respecto al tratamiento:",o:["El tratamiento psicoterapéutico es importante junto al farmacológico","La indicación farmacológica suele ser según la dimensión afectada","Pueden utilizarse antipsicóticos si hay síntomas psicóticos o impulsividad riesgosa","Todas son correctas"],c:3},
+{q:"42. Con respecto al tratamiento farmacológico de la depresión en el trastorno bipolar:",o:["Primera línea: monoterapia de lamotrigina o cualquier antidepresivo","Primera línea: monoterapia de lamotrigina o litio o quetiapina","Primera línea: monoterapia de lamotrigina o litio o una benzodiacepina","Primera línea: monoterapia de antipsicóticos típicos o benzodiacepinas"],c:1},
+{q:"43. Paciente se duerme rápido pero se despierta varias veces en la noche. Padece de…",o:["Parálisis del sueño","Narcolepsia","Insomnio tardío","Insomnio de mantenimiento"],c:3},
+{q:"44. Una depresión atípica se medica en primera instancia con:",o:["Antirrecurrenciales","Alprazolam","IRSS","Haloperidol"],c:2},
+{q:"45. Con respecto al TOC:",o:["Las obsesiones o compulsiones requieren mucho tiempo o causan malestar clínicamente significativo","Las comorbilidades son raras","El sujeto siempre tiene poca introspección con respecto a la idea obsesiva","Una obsesión se define por comportamientos o actos mentales repetitivos"],c:0},
+{q:"46. ¿Cuál par de psicofármacos son de primera línea en TEPT?",o:["Risperidona y clomipramina","Fluoxetina y paroxetina","Fluoxetina y clonazepam","Clonazepam y venlafaxina"],c:1},
+{q:"47. ¿Cuáles antidepresivos casi no producen disfunción sexual?",o:["Sertralina y fluoxetina","Bupropión y vortioxetina","Escitalopram y paroxetina","Venlafaxina y duloxetina"],c:1},
+{q:"48. Todos son criterios diagnósticos de TLP según DSM-V excepto:",o:["Sentimientos crónicos de vacío","Relaciones interpersonales intensas e inestables (idealización-devaluación)","Esfuerzos frenéticos por evitar un abandono real o imaginado","Obsesión extrema por la limpieza y el orden"],c:3},
+{q:"49. En la bulimia nerviosa…",o:["Hay restricción de la ingesta energética que conduce a peso significativamente bajo","Difícilmente presenta comorbilidades","Hay miedo intenso a ganar peso, incluso con peso significativamente bajo","Hay comportamientos compensatorios inapropiados y recurrentes, con atracones recurrentes"],c:3},
+{q:"50. Los TEA en el DSM-V:",o:["No se diagnostican","Se incluyen dentro de las psicosis de inicio en la infancia","Incluyen en su concepto al trastorno de Asperger","Son sinónimos de trastornos generalizados del aprendizaje"],c:2},
+{q:"51. En cuanto al tratamiento del TEA según sintomatología (marcar la incorrecta):",o:["Para los trastornos del sueño, benzodiacepinas en altas dosis","Para las conductas disruptivas e impulsivas, se administra Risperidona","Cada grupo sintomático tiene su algoritmo farmacológico","Para problemas atencionales y de hiperactividad, se administra metilfenidato y atomoxetina"],c:0},
+{q:"52. Los trastornos del neurodesarrollo, según el DSM-V:",o:["Poseen limitaciones globales","Son un grupo de condiciones que se diagnostican habitualmente en lactancia, infancia o adolescencia","Presentan un deterioro cognitivo y conductual","Se diagnostican luego de la adolescencia"],c:1},
+{q:"53. ¿Qué síntoma corresponde al trastorno de estrés agudo según el DSM-V?",o:["Recuerdos angustiosos recurrentes, involuntarios e intrusivos del suceso traumático","Obsesión extrema por la limpieza y el orden","Esfuerzos frenéticos por evitar un abandono real o imaginado","Preocupación por uno o más defectos percibidos en el aspecto físico"],c:0},
+{q:"54. En el tratamiento de la depresión, fase aguda, si no hay respuesta al IRSS:",o:["Se aumenta la dosis del IRSS o se prueba otro IRSS","Se prueba un tricíclico","Se administra un IMAO","Se considera refractaria y se piensa en técnicas neuromodulatorias"],c:0},
+{q:"55. Episodio depresivo mayor tratado con tricíclicos a dosis adecuadas sin respuesta. ¿Qué alternativa instaurar?",o:["Se suspende el antidepresivo y se inicia un estabilizador del ánimo por interpretarse como bipolar","Iniciar estrategia de potenciación con litio, quetiapina, aripiprazol u otro antidepresivo (bupropión o mirtazapina)","Se rota a un IRSS ya que son los más eficaces que existen","Se rota a un IRSN ya que son los más eficaces que existen"],c:1},
+{q:"56. El tratamiento farmacológico del TOC tiene las siguientes características (marque la incorrecta):",o:["Durante tiempo prolongado","Respuesta terapéutica total","Tiempo de latencia prolongado","Con altas dosis de antidepresivos"],c:1},
+{q:"57. TLP con predominio de conductas impulsivas, medicación de primera elección:",o:["Litio","Alprazolam","Risperidona, Olanzapina o Clozapina","Fluoxetina"],c:3},
+{q:"58. Los principales medicamentos para Alzheimer aumentan en las sinapsis la cantidad de:",o:["Adrenalina","Acetilcolina","Dopamina","Noradrenalina"],c:1},
+{q:"59. La dependencia de sustancias psicoactivas:",o:["Es un grave problema de salud pública","La vía dopaminérgica mesocorticolímbica interviene en los efectos motivadores (refuerzo positivo)","Muy frecuentemente comórbida con otros cuadros psicopatológicos","Todas son correctas"],c:3},
+{q:"60. Paciente con trastorno de pánico que cursa con despersonalización, tratamiento de elección:",o:["Carbamacepina","Antipsicóticos en dosis bajas","Benzodiacepinas en dosis elevadas","IRSS en dosis convencionales"],c:3},
+{q:"61. ¿Cuál afirmación sobre patologías duales NO es correcta?",o:["Caracterizadas por presencia de trastorno por consumo de sustancias y otro trastorno mental comórbido","Cuando el trastorno comórbido se desarrolló antes del consumo, hablamos de “trastorno mental primario”","El trastorno comórbido puede haber iniciado antes o después del consumo","El trastorno mental comórbido siempre se desarrolla como consecuencia del consumo de sustancias"],c:3},
+{q:"62. Con respecto a la utilización del litio en el trastorno bipolar:",o:["Puede utilizarse durante un episodio maníaco, pero nunca en depresión o mantenimiento","Puede utilizarse en mantenimiento, pero nunca en fases maníaca o depresiva","Puede utilizarse tanto en mantenimiento como en episodios maníacos o depresivos","Puede utilizarse en presentación depresiva, pero nunca en maníaca o mantenimiento"],c:2},
+{q:"63. Señale la tríada sintomática del TDAH:",o:["Impulsividad, ansiedad y abulia","Atención, abulia y apatía","Hiperactividad, impulsividad y apatía","Hiperactividad, inatención e impulsividad"],c:3},
+{q:"64. ¿Cuál conjunto de síntomas NO corresponde al TEPT?",o:["Afectivos y cognitivos","Alerta e hipervigilancia","Reexperimentación","Dificultad en el aprendizaje"],c:3},
+{q:"65. Señale la afirmación INCORRECTA:",o:["Los IRSN están aprobados para TDM, ansiedad y TEPT","En un paciente anciano conviene simplificar el plan farmacológico","Todos los psicofármacos son capaces de generar dependencia, abstinencia y adicción","La quetiapina tiene perfil farmacodinámico multimodal complejo, útil para varios síntomas"],c:2},
+{q:"66. Característica diagnóstica del trastorno esquizoide de la personalidad según DSM-V:",o:["Dificultad en el aprendizaje y aptitudes académicas","Patrones restrictivos y repetitivos de comportamiento, intereses o actividades","Comportamiento excéntrico y distorsiones cognitivas y perceptivas","Patrón predominante de desapego en relaciones sociales y poca expresión emocional"],c:3},
+{q:"67. ¿Qué grupo de fármacos se utiliza en la dimensión cognitiva del TLP?",o:["Antipsicóticos atípicos","Benzodiacepinas","ISRS","Ninguno de los anteriores"],c:0},
+{q:"68. La bulimia nerviosa presenta mayor comorbilidad con:",o:["TLP","Trastorno antisocial de la personalidad","Fobia específica","Todas son correctas"],c:0},
+{q:"69. ¿Qué signos pueden sugerir demencia multiinfarto?",o:["Antecedentes de hipertensión","Antecedentes de ACV o eventos cardiovasculares","Un estado amotivacional senil","A y B son correctas"],c:3},
+{q:"70. Señale la respuesta CORRECTA:",o:["La sertralina es un fármaco aprobado en el tratamiento del TEPT","Los antipsicóticos atípicos y antiepilépticos son de primera elección en el TEPT","Se recomienda el uso de benzodiacepinas en el TEPT","El TEPT se trata con psicoestimulantes"],c:0},
+{q:"71. Señale la afirmación INCORRECTA sobre problemas del sueño:",o:["Muchos antipsicóticos atípicos tienen propiedades antihistamínicas favoreciendo el sueño","El empleo de benzodiacepinas por tiempo prolongado no se asocia al riesgo de generar dependencia","La quetiapina en dosis bajas puede favorecer el sueño sin producir síndrome metabólico","Los inductores de corta vida media pueden usarse en insomnios de conciliación"],c:1},
+{q:"72. Señale cuál afirmación NO es correcta:",o:["Atípicos pueden usarse en anorexia con mucha resistencia, rigidez cognitiva y distorsión corporal","El trastorno por atracón se caracteriza por atracones y conductas compensatorias para perder peso","La anorexia nerviosa puede ser restrictiva o con atracones y/o purgas","El tratamiento para los TCA debe ser interdisciplinario"],c:1},
+{q:"73. Además de la psicoterapia, en el trastorno de ansiedad social se puede utilizar:",o:["Clonidina","Sales de litio","Psicoestimulantes como metilfenidato","IRSS o IMAO"],c:3},
+{q:"74. Depresión con características ansiosas, antidepresivo de primera elección:",o:["Un IRSS con perfil sedativo (Paroxetina)","Un IRSS más activante (Fluoxetina)","Un tricíclico activante","Un IMAO selectivo"],c:0},
+{q:"75. Pueden aparecer en el TEPT todas, excepto:",o:["Prevención del trastorno administrando benzodiacepinas preventivamente luego de un evento traumático","Evitación de recordatorios externos","Flashbacks","Recuerdos angustiosos intrusivos"],c:0},
+{q:"76. Los estimulantes son efectivos en TDAH por aumentar NE y… ¿qué otro neurotransmisor?",o:["Acetilcolina","Glutamato","GABA","Dopamina"],c:3},
+{q:"77. Señale la afirmación incorrecta:",o:["Los antidepresivos pueden inducir ciclado rápido y episodios mixtos","Los antidepresivos pueden producir desestabilización en un trastorno bipolar","Los antidepresivos son moléculas seguras en el tratamiento del trastorno bipolar","Los antidepresivos inducen switch o viraje a la manía/hipomanía"],c:2},
+{q:"78. ¿Cuál algoritmo coincide con el tratamiento farmacológico de la esquizofrenia?",o:["Se prueban tres antipsicóticos (típicos/atípicos) y en cuarta línea clozapina","Se comienza con risperidona, si no responde clozapina como segunda línea","Risperidona, si no responde rotar a haloperidol, y si refractaria, clozapina en tercera instancia","Se comienza con clozapina, luego risperidona, luego olanzapina"],c:2},
+{q:"79. Primer episodio depresivo mayor leve:",o:["1° línea tricíclicos por pocos efectos adversos y baja efectividad","1° línea duales por pocos efectos adversos y baja efectividad","Se empieza con IMAO, sin comer queso o fermentados","Se eligen IRSS por buen perfil de efectos adversos y efectividad en episodios leves/moderados"],c:3},
+{q:"80. Marque la opción correcta sobre anorexia nerviosa:",o:["Restricción de ingesta energética que conduce a peso significativamente bajo","Miedo intenso a ganar peso o comportamiento que interfiere en el aumento de peso","Alteración en la percepción de la morfología corporal","Todas son correctas"],c:3},
+{q:"81. Tratamiento farmacológico de la agorafobia:",o:["1° elección un dual como la venlafaxina","1° elección un IRSS, y si no hay respuesta, probar otro IRSS","1° elección un IRSS, y si no hay respuesta, combinar con benzodiacepina","Utilizar únicamente benzodiacepinas hasta disminuir síntomas"],c:1},
+{q:"82. En el tratamiento del TEPT:",o:["Se recomienda psicoterapia orientada al trauma y los IRSS o venlafaxina","Solo es eficaz la psicoterapia","Los antirrecurrenciales son de primera elección","Se indican benzodiacepinas para prevenir el desarrollo del mismo"],c:0},
+{q:"83. El cannabis:",o:["No produce dependencia en ningún caso","Tiene efecto estabilizador de la psicosis","Está libre de efectos adversos","Suele ser usado por personas con trastornos afectivos para modular el ánimo"],c:3},
+{q:"84. Sobre el tratamiento de la depresión:",o:["Recaída: reaparición de síntomas tras al menos 2 meses de remisión","Recurrencia: reaparición de síntomas antes de los 2 meses de remisión","Fase aguda busca remisión, fase de mantenimiento busca prevenir recaídas o recurrencias","Recaída y recurrencia son lo mismo"],c:2},
+{q:"85. ¿Qué clase de medicamento es el donepezilo?",o:["Inhibidor de la colinesterasa","Antagonista del glutamato","Inhibidor mixto de la recaptación de serotonina y dopamina","IRSS"],c:0},
+{q:"86. El sildenafil:",o:["Es un inhibidor de la fosfodiesterasa y funciona como vasodilatador","La vasodilatación puede producir hipotensión arterial","Se utiliza en disfunción eréctil al permitir entrada de sangre a cuerpos cavernosos","Todas son correctas"],c:3},
+{q:"87. Paciente que experimenta un único ataque de pánico tras situación traumática, ¿qué le dice?",o:["Que deberá quedar internado por descompensación","Lo contiene y eventualmente el psiquiatra le administra una benzodiacepina si es necesario","Interconsulta con cardiólogo en UCI","Comenzar plan con benzodiacepinas e IRSS más psicoterapia"],c:1},
+{q:"88. Señale la correcta sobre el tratamiento del TLP:",o:["Conviene evitar fármacos con serios efectos adversos en sobredosis por la impulsividad","Las benzodiacepinas son de primera elección","El tratamiento psicoterapéutico es intermitente y el farmacológico permanente","El tratamiento específico de los trastornos de personalidad son los estabilizadores del ánimo siempre"],c:0},
+{q:"89. Esquizofrenia con sobrepeso, cambio de medicación. Mejor opción:",o:["Clozapina","Ziprasidona","Olanzapina","Quetiapina"],c:1},
+{q:"90. En eyaculación precoz se puede utilizar:",o:["Antipsicóticos atípicos","Antipsicóticos con antagonismo H1","IRSS","Benzodiacepinas"],c:2},
+{q:"91. Señale la opción correcta acerca del tratamiento de la esquizofrenia:",o:["Fase aguda: antipsicótico atípico (de preferencia) o típico","Si no responde con uno, se rota a otro antipsicótico típico o atípico","Clozapina se usa luego de dos antipsicóticos sin respuesta favorable","Todas son correctas"],c:3},
+{q:"92. Incluidos en el capítulo de trastornos relacionados con traumas EXCEPTO:",o:["TEPT","Trastornos de adaptación","Trastorno de estrés agudo","Trastorno de pánico"],c:3},
+{q:"93. Con respecto al sueño REM, marque la opción incorrecta:",o:["Es la etapa de mayor actividad onírica","Hay actividad cerebral que sirve para fijar la memoria","En hombres se produce erección involuntaria, ayuda a diferenciar impotencia psicógena de orgánica","El sonambulismo y terrores nocturnos ocurren en REM y se recuerdan perfectamente"],c:3},
+{q:"94. Tratamiento farmacológico para la fobia específica:",o:["Benzodiacepinas si el estímulo fóbico es inevitable pero de baja frecuencia","Puede optarse por un IRSS o un tricíclico","No existe tratamiento farmacológico","Siempre se recomienda IRSS"],c:0},
+{q:"95. Con respecto a las disomnias:",o:["Narcolepsia: se prefieren hipnóticos no benzodiacepínicos","Insomnio de conciliación: múltiples despertares nocturnos","Insomnio de mantenimiento: dificultad para dormir al comienzo de la noche","La narcolepsia es un trastorno donde se pasa directamente a sueño REM desde vigilia, en cualquier momento del día"],c:3},
+{q:"96. Tratamiento farmacológico de la manía en el trastorno bipolar:",o:["Comienza con un antirrecurrencial y una benzodiacepina","Comienza con un antipsicótico típico y luego atípico","Comienza con un antipsicótico atípico y un antirrecurrencial, y luego una benzodiacepina","Comienza con un antipsicótico atípico y una benzodiacepina, y luego se inicia el antirrecurrencial"],c:3},
+{q:"97. Señale lo correcto respecto a TEA:",o:["Los antipsicóticos son el tratamiento específico del TEA en todos los casos","Es considerada psicosis de la infancia según DSM-V","Poca penetrancia genética, crianza como factor principal según DSM-V","Los principales dominios afectados son comunicación/interacción social y patrón de intereses restringido"],c:3},
+{q:"98. ¿Causa MÁS común de trastorno neurocognitivo?",o:["Demencia vascular","Demencia frontotemporal","Enfermedad de Alzheimer","Enfermedad por cuerpos de Lewy"],c:2},
+{q:"99. Depresión, fase aguda, sin respuesta al IRSS:",o:["Se interpreta como refractaria y se instaura un tratamiento","Se rota a un IMAO","Se agrega al IRSS un tricíclico","Se puede rotar por otro IRSS o a un dual (IRSN) como venlafaxina o duloxetina"],c:3},
+{q:"100. El tratamiento farmacológico del trastorno de angustia/pánico consiste en:",o:["1° elección IRSS, si no hay respuesta combinarlo con benzodiacepina","Utilizar benzodiacepina hasta disminuir síntomas","1° elección un dual (IRSN) como venlafaxina","1° elección IRSS, si no hay respuesta probar otro IRSS o un tricíclico"],c:3},
+{q:"101. Con respecto a las benzodiacepinas en trastornos de ansiedad:",o:["No se recomienda más de un mes porque se acumulan y puede aparecer sedación diurna","Se recomienda más de un mes porque el efecto tarda semanas en ser óptimo","Se utilizan el primer mes en combinación con antidepresivos","No se recomienda más de un mes porque generan tolerancia y dependencia, con efectos adversos reversibles sobre memoria y cognición"],c:3},
+{q:"102. ¿Característica diagnóstica de los TEA?",o:["Problemas de concentración y atención sostenida","Dificultad en aprendizaje y aptitudes académicas","Deficiencias persistentes en comunicación social e interacción social en diversos contextos","Hiperactividad cuando se espera que esté tranquilo"],c:2},
+{q:"103. Sobre el TEPT:",o:["Cursa con recuerdos angustiosos, sueños, reacciones disociativas, malestar y reacciones fisiológicas que condicionan el comportamiento","Sintomatología dura menos de un mes","Nunca aparecen síntomas disociativos como despersonalización/desrealización","Hay cambios en el ánimo pero no conductuales"],c:0},
+{q:"104. ¿Cuál NO sería buena estrategia para tratamiento por consumo de alcohol?",o:["Acamprosato","Metilfenidato","Naltrexona","Disulfiram"],c:1},
+{q:"105. Marque la opción correcta con respecto a la bulimia nerviosa:",o:["Ingestión de cantidad superior a lo habitual con sensación de pérdida de control","Conductas compensatorias: vómito, laxantes, diuréticos, etc.","Generalmente peso normal o sobrepeso","Todas son correctas"],c:3},
+{q:"106. Sobre el tratamiento del trastorno depresivo mayor:",o:["Elección inicial basada en subtipo, características, comorbilidad, perfil de efectos secundarios, antecedentes","Si no responde a IRSS inicial, cambiar a otro IRSS y luego evaluar otra familia","Objetivo: remisión sintomática y recuperación psicosocial","Todas son correctas"],c:3},
+{q:"107. ¿Cuál es el neurotransmisor implicado en TOC?",o:["Dopamina","Acetilcolina","Serotonina","Noradrenalina"],c:2},
+{q:"108. Drogas aprobadas para Alzheimer:",o:["Donepezilo","Rivastigmina","Galantamina","Todas son correctas"],c:3},
+{q:"109. El tratamiento farmacológico del TOC (marque la INCORRECTA):",o:["Durante tiempo prolongado","Con altas dosis de antidepresivos","Respuesta farmacológica total","Tiempo de latencia prolongado"],c:2},
+{q:"110. Señale la afirmación correcta sobre demencia de Alzheimer:",o:["Produce daños neurológicos reversibles","Afecta solamente la esfera cognitiva","Es una demencia cortical, degenerativa y adquirida","Se trata con agonistas de la acetil-colinesterasa"],c:2},
+{q:"111. En cuanto al tratamiento de los TCA (marque la INCORRECTA):",o:["Requiere equipo interdisciplinario","No hay psicofármacos específicos, se medica según sintomatología","El topiramato genera aumento significativo de peso, no recomendable para TCA","El atracón: ingestión corta de cantidad superior a lo habitual con falta de control"],c:2},
+{q:"112. En cuanto a sexualidad (marcar la INCORRECTA):",o:["El sildenafil actúa entre 30 y 50 minutos","Mecanismo de erección: vasodilatación arterial","Con sildenafil no es necesaria la estimulación sexual","Con aumento de GMPc se relaja el músculo liso del cuerpo cavernoso"],c:2},
+{q:"113. Para el tratamiento del trastorno bipolar:",o:["La manía es un estado de ánimo normal y elevado, expansivo o irritable","En manía aguda se comienza con antipsicótico y benzodiacepina","El tratamiento del TBP tipo 1 debe ser de por vida","Todas son correctas"],c:3},
+{q:"114. En cuanto a la esquizofrenia:",o:["Tratamiento psicoterapéutico, psicoeducativo, rehabilitación cognitiva y social","El debut es con sintomatología positiva","Existen síntomas negativos residuales propios de la enfermedad","A y C son correctas"],c:3},
+{q:"115. Se define al atracón como:",o:["Ingesta en corto tiempo y cantidad superior a lo habitual","Ingesta copiosa de alimentos","Sensación de pérdida de control sobre la ingesta","A y C son correctas"],c:3},
+{q:"116. Director de cine con jet lag en Indonesia, insomnio. Se recomienda:",o:["Zolpidem","Clonazepam","Melatonina","Mirtazapina"],c:2},
+{q:"117. Problema de los antipsicóticos atípicos: síndrome",o:["Parkinsoniano","Extrapiramidal","Metabólico","De inmunodeficiencia"],c:2},
+{q:"118. Con respecto a la disfunción sexual eréctil:",o:["Pertenece al grupo de trastornos del orgasmo","Dificultad para contener voluntariamente la eyaculación más de 2 minutos","La falta de erección da cuenta de esterilidad","Imposibilidad de tener erección suficiente para actividad sexual satisfactoria"],c:3},
+{q:"119. ¿Por qué se llama esquizofrenia resistente?",o:["Cuando el tratamiento con antipsicótico atípico no fue efectivo","Porque no se puede usar clozapina","Cuando se le dieron dos antipsicóticos en tiempo y dosis adecuados y no hubo mejoría","Cuando el paciente no quiere tomar su medicación"],c:2},
+{q:"120. Marque la opción correcta sobre el tratamiento de los TEA:",o:["1ra opción siempre farmacológica","El tratamiento no se rige por los síntomas","Solo se utilizan antipsicóticos atípicos","Se contempla psicoterapia y psicofármacos según el perfil del paciente"],c:3},
+{q:"121. En cuanto al tratamiento farmacológico del TAG:",o:["Largo (9-12 meses), benzodiacepina de alta potencia y larga vida media mejor opción","Breve (2-4 meses), benzodiacepina de alta potencia y larga vida media mejor opción","Largo (9-12 meses), un IRSS es la mejor opción","Breve (2-4 meses), un IRSS es la mejor opción"],c:2},
+{q:"122. ¿Cuáles fármacos pueden producir dependencia?",o:["Antidepresivos y convulsivantes","Benzodiacepinas y metilfenidato","Antipsicóticos y estabilizadores del ánimo","Todas son correctas"],c:1},
+{q:"123. Primer episodio depresivo mayor leve refractario a los IRSS:",o:["Se suma al último IRSS los tricíclicos por pocos efectos adversos","Se rota a duales por pocos efectos adversos y algo más potentes que IRSS","Se empieza con IMAO sin comer queso o fermentados","Se considera refractaria y se piensan terapias neuromodulatorias"],c:1},
+{q:"124. Para diagnóstico de TDM, marque la opción correcta:",o:["Debe presentarse sí o sí un estado de ánimo deprimido","Los síntomas deben presentarse con un mínimo de dos semanas","Es necesario que se presenten 7 o más síntomas del criterio A","Debe presentarse sí o sí anhedonia"],c:1},
+{q:"125. Para diagnóstico de esquizofrenia:",o:["No es necesario que haya afectación en trabajo, relaciones o cuidado personal","Los síntomas del criterio A deben persistir durante un mínimo de un mes","Los signos continuos deben persistir un mínimo de 3 meses","Debe darse catatonia al principio"],c:1},
+{q:"126. En la manía puede aparecer:",o:["Ánimo persistentemente elevado","Impulsividad","Insomnio “bienvenido”","Todas las anteriores"],c:3},
+{q:"127. ¿Cuál NO está incluido en el capítulo de trastornos depresivos del DSM-V?",o:["Trastorno depresivo persistente","Trastorno disruptivo de disregulación emocional","Trastorno depresivo mayor","Mutismo selectivo"],c:3},
+{q:"128. ¿Cuál afirmación le parece INCORRECTA?",o:["En las fobias sociales se presentan ocasionalmente depresiones","En las fobias simples se detecta una ansiedad flotante permanente","Las fobias a animales son fobias simples","La agorafobia suele acompañar al trastorno de pánico"],c:1},
+{q:"129. ¿Con qué enfermedad se asocia frecuentemente la depresión?",o:["Apendicitis","Infección urinaria","Miocarditis","Hipotiroidismo"],c:3},
+{q:"130. Los síntomas catatónicos son observables en:",o:["Esquizofrenia","Trastorno depresivo","Trastorno cerebral orgánico","Todas son correctas"],c:3},
+{q:"131. Marque la opción correcta en relación a la esquizofrenia:",o:["Puede o no presentar catatonia","Comprende un abanico de cuadros clínicos muy variados","En la evolución influyen la conceptualización integral, alianza terapéutica y red social","Todas son correctas"],c:3},
+{q:"132. ¿Antiepiléptico con efecto adverso grave Síndrome de Steven-Johnson?",o:["Ácido valproico","Lamotrigina","Topiramato","Gabapentina"],c:1},
+{q:"133. ¿Qué comparten los antipsicóticos típicos y atípicos?",o:["Ambos son antagonistas parciales 5HT1A","Ambos son antagonistas 5HT2A","Ambos son antagonistas adrenérgicos","Ambos son antagonistas D2"],c:3},
+{q:"134. ¿En cuál caso NO ESTARÍA CONTRAINDICADO el uso de benzodiacepinas?",o:["Síndrome de apneas durante el sueño","Intoxicación alcohólica aguda","Insomnio primario","Intoxicación con fármacos depresores del SNC"],c:2},
+{q:"135. ¿Cuál antidepresivo NO provoca disfunción sexual?",o:["Fluoxetina","Bupropión","Citalopram","Venlafaxina"],c:1},
+{q:"136. ¿Cuál antidepresivo NO provoca aumento de peso?",o:["Mirtazapina","Bupropión","Paroxetina","Mianserina"],c:1},
+{q:"137. Los IMAO:",o:["Se relegan a segundas o terceras opciones por sus efectos adversos","Pueden asociarse libremente con otros antidepresivos","Son muy eficaces para depresión con características atípicas","Requieren estrictas restricciones alimentarias"],c:0},
+{q:"138. La fluoxetina:",o:["Se reserva para alcohólicos por bajo perfil de acción en citocromos P450","Se administra por goteo EV para despertar intoxicados por benzodiacepinas","Tiene una vida media de un mes","Es más productora de arritmias que los tricíclicos","Ninguna es correcta"],c:4},
+{q:"139. Para que se produzca la erección, es necesario (señale la incorrecta):",o:["Exista un estímulo físico o psíquico","Se sintetice óxido nítrico","Intervenga la enzima guanilato-ciclasa","Haya disponible GMP Cíclico","Se produzca la relajación del músculo liso cavernoso","Actúe la enzima 5 fosfodiesterasa"],c:5},
+{q:"140. TLP con síntomas impulsivos, IRSS sin cambios. ¿Qué fármaco en segunda instancia?",o:["Un tricíclico","Otro IRSS","IMAO","A y B son correctas","Ninguna es correcta"],c:1},
+{q:"141. ¿Cuándo existe esquizofrenia resistente?",o:["Cuando el tratamiento con clozapina no ha sido efectivo","Cuando luego de dos antipsicóticos en tiempo y dosis adecuados no hubo mejoría","Cuando el tratamiento con típicos no ha sido efectivo","Cuando el tratamiento con atípicos no ha sido efectivo"],c:1},
+{q:"142. No produce SEP y es recomendado en Parkinson:",o:["Risperidona","Quetiapina","Cualquiera de ellas","Ninguna de ellas"],c:1},
+{q:"143. El tratamiento para bulimia o anorexia nerviosa deberá ser:",o:["Farmacológico","Psicoterapéutico","Familiar","Interdisciplinario/Multidisciplinario"],c:3},
+{q:"144. Señale la incorrecta:",o:["Agonistas alfa 1 y alfa 2 adrenérgicos pueden producir disfunción eréctil","Antagonistas 5HT2A producen escasa o nula disfunción sexual","Agonistas dopaminérgicos intensifican el deseo sexual","IRSS disminuyen síntesis de óxido nítrico, bupropión la incrementa","Anticolinérgicos (tricíclicos y antipsicóticos) favorecen la erección","La trazodona puede producir priapismo"],c:4},
+{q:"145. No produce trastornos sexuales y es sedativa:",o:["Olanzapina","Ziprasidona","Mirtazapina (también mianserina)","Venlafaxina"],c:2},
+{q:"146. Paciente con insomnio de conciliación deberá ser medicado con:",o:["Una benzodiacepina de acción corta (e.g. midazolam)","Benzodiacepina de acción larga","Benzo con efecto residual","Benzo con efecto acumulativo"],c:0},
+{q:"147. Paciente con depresión y obesidad deberá ser medicado con:",o:["Paroxetina","Mirtazapina","Fluoxetina","Citalopram"],c:2},
+{q:"148. Tiempo estipulado antes de cambiar fármaco en cuadros de ansiedad:",o:["2 a 5 meses","6 a 9 meses","9 a 12 meses","7 a 10 meses"],c:2},
+{q:"149. Atomoxetina y metilfenidato presentan como mecanismo común:",o:["Aumento de DA y NE en corteza prefrontal y sistema límbico","Aumento de DA y NE en corteza prefrontal","Aumento solo de NE en sistema límbico","Aumento de DA en núcleo accumbens y estriado"],c:1},
+{q:"150. En el tratamiento para el ataque de pánico, se administran:",o:["Benzodiacepinas","IRSS","IMAO","Tricíclicos","A y B son correctas"],c:4},
+{q:"151. Señale la incorrecta:",o:["La disfunción sexual eréctil puede ser orgánica, psicológica o mixta","Puede deberse a HTA, hipercolesterolemia, diabetes, esclerosis múltiple o lesiones medulares","Está asociada a la esterilidad, imposibilidad de orgasmo y eyaculación","La disfunción sexual puede tener causas psicógenas","Puede ser causada por ansiedades y angustias situacionales"],c:2},
+{q:"152. En la enfermedad de Alzheimer (señale la correcta):",o:["Se pierde primero la memoria remota y luego la episódica","Hay un aumento de los niveles de acetilcolina","A largo plazo puede producir agnosias y apraxias","Todas son correctas"],c:2},
+{q:"153. Se considera que hay recurrencia de sintomatología depresiva cuando:",o:["Tras remisión, los síntomas reaparecen después de 2 meses como mínimo","Tras remisión, los síntomas aparecen antes de los 2 meses","No hay remisión","Tras remisión, los síntomas reaparecen después de 1 mes como mínimo"],c:0},
+{q:"154. La melatonina (señale la incorrecta):",o:["Es una hormona natural secretada por la glándula pineal o epífisis","Muestra mayores concentraciones en períodos de oscuridad","Es estimulada por la luz","Regula los ritmos biológicos del sueño y la vigilia","Está localizada en el centro del cerebro"],c:2},
+{q:"155. Señale la incorrecta:",o:["En la bulimia, atracones y conductas compensatorias ocurren ≥2 veces/semana durante 3 meses","En el trastorno por atracón, los atracones ocurren ≥2 veces/semana durante 6 meses","En el trastorno por atracón no hay conductas compensatorias","En la anorexia puede haber amenorrea","La prevalencia es mayor para anorexia que para bulimia"],c:4},
+{q:"156. Hay abuso de sustancia cuando (marque la incorrecta):",o:["Se consume en situaciones que implican peligro","No se produce tolerancia","No se produce abstinencia","Hay un uso compulsivo"],c:3},
+{q:"157. ¿En qué tipo de consumo se verifica tolerancia y dependencia?",o:["En el consumo experimental","En el consumo ocasional","En el circunstancial","En el habitual","En el adictivo","D y E son correctas"],c:5},
+{q:"158. Marque la incorrecta:",o:["El alcohol es lipofílico (afinidad por tejidos grasos, e.g. cerebro)","Aumenta el contenido graso de la célula hepática","El etanol es teratogénico: síndrome fetal alcohólico","A largo plazo disminuye transmisión gabaérgica; cirrosis, pancreatitis, insuficiencia cardíaca","El síndrome de Korsakoff produce amnesia a largo plazo","El síndrome de Korsakoff es causado por déficit de Vitamina B1"],c:4},
+{q:"159. En el tratamiento de síntomas cognitivos del TLP, se prescriben:",o:["IRSS","Antipsicóticos","Estabilizadores del ánimo","Tricíclicos"],c:1},
+{q:"160. Paciente alcohólico con cirrosis, excitación maníaca y agresividad. ¿Qué fármaco?",o:["Litio","Ácido valproico","Carbamacepina","Cualquiera de ellas","Ninguna de ellas"],c:1},
+{q:"161. Marque la correcta respecto a la Clozapina:",o:["Es muy eficaz pero poco segura (puede producir agranulocitosis)","No se debe prescribir en ningún caso","No produce síndrome metabólico","B y C son correctas"],c:0},
+{q:"162. Marque la correcta respecto a la anhedonia:",o:["Puede ser inducida por psicofármacos","Es un síntoma positivo de la psicosis","Se produce siempre en la psicosis","Ninguna es correcta"],c:0},
+{q:"163. En el tratamiento del TOC es aconsejable medicar (marque la correcta):",o:["Tricíclicos en dosis bajas","IMAO","IRSS en dosis altas, mayores a las usadas para la depresión","Nunca se usan antipsicóticos"],c:2},
+{q:"164. Señale la correcta respecto de la anorexia nerviosa:",o:["Hay una disminución de peso muy importante","Hay una distorsión de la imagen corporal","Puede haber acciones purgativas","Todas son correctas"],c:3},
+{q:"165. El uso de antidepresivos en el TBP puede ocasionar:",o:["Que se convierta en ciclado rápido","Que se produzca un viraje a la manía","A y B son correctas","Ninguna es correcta"],c:2},
+{q:"166. Puede producir síndrome metabólico (aumento de peso):",o:["Olanzapina","Clozapina","Ziprasidona","Aripiprazol","A y B son correctas"],c:4},
+{q:"167. En general, los antipsicóticos atípicos producen:",o:["Menos SEP","Mejoría de síntomas positivos","Mejoría de síntomas negativos","Menor incidencia de discinesia tardía","Bloqueo serotonin-dopaminérgico","Todas son correctas"],c:5},
+{q:"168. Para tratar el insomnio de mantenimiento es necesario:",o:["Que el tiempo de acción del fármaco sea corto","Que la fase de distribución sea más lenta","Que la fase de distribución sea lo más reducida posible","B y C son correctas"],c:1},
+{q:"169. ¿Droga que produce efectos paradojales (estimulación y luego depresión del SN)?",o:["Anfetaminas","Cocaína","Alcohol","Marihuana"],c:2},
+{q:"170. Es sustancia depresora del SN:",o:["Tabaco","Coca","Inhalantes","Opiáceos","C y D son correctas"],c:4},
+{q:"171. Estimula la liberación de dopamina produciendo efectos psicóticos:",o:["Morfina","Codeína","Heroína","Anfetamina"],c:3},
+{q:"172. Con respecto al TOC:",o:["Se administran antidepresivos en dosis bajas","Cuando el tratamiento ha sido eficaz se mantiene 1-2 años antes de retirada gradual","Los IRSS son de primera línea en el abordaje farmacológico del TOC","B y C son correctas"],c:3},
+];
+
+
+const letters = ['A','B','C','D','E','F'];
+const state = QUESTIONS.map(()=>({answered:false, selected:null}));
+
+const container = document.getElementById('container');
+const statAnswered = document.getElementById('statAnswered');
+const statCorrect = document.getElementById('statCorrect');
+const progressBar = document.getElementById('progressBar');
+
+function render(){
+  container.innerHTML = '';
+  QUESTIONS.forEach((q,qi)=>{
+    const card = document.createElement('div');
+    card.className = 'qcard';
+    card.id = 'q'+qi;
+
+    const num = document.createElement('div');
+    num.className = 'qnum';
+    num.textContent = 'Pregunta '+(qi+1)+' de '+QUESTIONS.length;
+    card.appendChild(num);
+
+    const qt = document.createElement('div');
+    qt.className = 'qtext';
+    qt.textContent = q.q.replace(/^\d+\.\s*/,'');
+    card.appendChild(qt);
+
+    const opts = document.createElement('div');
+    opts.className = 'options';
+    q.o.forEach((optText, oi)=>{
+      const lbl = document.createElement('label');
+      lbl.className = 'opt';
+      lbl.innerHTML = '<span class="letter">'+letters[oi]+'</span><span>'+optText+'</span>';
+      lbl.addEventListener('click', ()=>selectAnswer(qi, oi));
+      opts.appendChild(lbl);
+    });
+    card.appendChild(opts);
+
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    fb.id = 'fb'+qi;
+    card.appendChild(fb);
+
+    container.appendChild(card);
+  });
+  updateStats();
+}
+
+function selectAnswer(qi, oi){
+  const s = state[qi];
+  if(s.answered) return; // lock after first answer
+  s.answered = true;
+  s.selected = oi;
+
+  const card = document.getElementById('q'+qi);
+  const optEls = card.querySelectorAll('.opt');
+  const q = QUESTIONS[qi];
+  const isCorrect = oi === q.c;
+
+  optEls.forEach((el,idx)=>{
+    if(idx===oi) el.classList.add('sel');
+    if(idx===q.c) el.classList.add('show-correct');
+    else if(idx===oi) el.classList.add('show-wrong');
+  });
+
+  card.classList.add(isCorrect ? 'correct' : 'wrong');
+
+  const fb = document.getElementById('fb'+qi);
+  fb.classList.add('show');
+  if(isCorrect){
+    fb.classList.add('ok');
+    fb.textContent = '✓ Correcto.';
+  } else {
+    fb.classList.add('bad');
+    fb.textContent = '✗ Incorrecto. Rta correcta: '+letters[q.c]+') '+q.o[q.c];
+  }
+  updateStats();
+}
+
+function updateStats(){
+  const answered = state.filter(s=>s.answered).length;
+  const correct = state.filter((s,i)=>s.answered && s.selected===QUESTIONS[i].c).length;
+  statAnswered.textContent = answered+'/'+QUESTIONS.length;
+  statCorrect.textContent = correct;
+  progressBar.style.width = (answered/QUESTIONS.length*100)+'%';
+}
+
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  if(!confirm('¿Reiniciar todas las respuestas?')) return;
+  state.forEach(s=>{s.answered=false; s.selected=null;});
+  render();
+  window.scrollTo({top:0, behavior:'smooth'});
+});
+
+document.getElementById('finishBtn').addEventListener('click', ()=>{
+  const answered = state.filter(s=>s.answered).length;
+  const correct = state.filter((s,i)=>s.answered && s.selected===QUESTIONS[i].c).length;
+  const unanswered = QUESTIONS.length - answered;
+  let pct = answered ? Math.round(correct/answered*100) : 0;
+  alert('Resultado:\n\nRespondidas: '+answered+'/'+QUESTIONS.length+
+        (unanswered ? ' ('+unanswered+' sin responder)' : '')+
+        '\nCorrectas: '+correct+
+        '\nPorcentaje sobre respondidas: '+pct+'%');
+});
+
+render();
+</script>
+</body>
+</html>
